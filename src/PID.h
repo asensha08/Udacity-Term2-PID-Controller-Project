@@ -1,6 +1,8 @@
 #ifndef PID_H
 #define PID_H
 
+#include <vector>
+
 class PID {
 public:
   /*
@@ -17,6 +19,14 @@ public:
   double Ki;
   double Kd;
 
+  //Variables of Twiddle
+  std::vector<double> dp;
+  int step, index;
+  int total_steps;
+  double error;
+  double best_error;
+  bool is_used_twiddle;
+
   /*
   * Constructor
   */
@@ -31,6 +41,7 @@ public:
   * Initialize PID.
   */
   void Init(double Kp, double Ki, double Kd);
+
 
   /*
   * Update the PID error variables given cross track error.

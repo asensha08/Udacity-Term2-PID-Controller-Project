@@ -2,7 +2,10 @@
 #include <iostream>
 #include "json.hpp"
 #include "PID.h"
-#include <math.h>
+#include "math.h"
+#include "Twiddle.h"
+
+#define maxstep 1000
 
 // for convenience
 using json = nlohmann::json;
@@ -11,7 +14,8 @@ using json = nlohmann::json;
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
-
+double throttle_1;
+    
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -33,9 +37,27 @@ int main()
   uWS::Hub h;
 
   PID pid;
+
+  
+  //double init_Kp=0.9;
+  //double init_Kd=0.0006;
+  //double init_Ki=1;
+
+  //double init_Kp=0.3;
+  //double init_Kp=0.23;//nice
+  double init_Kp=0.13;//nice
+  double init_Kd=0.0002;
+  double init_Ki=3.01;
+  pid.Init(init_Kp,init_Kd, init_Ki);
+
+
+
+  bool enable_twiddle=true;
+  Twiddle twiddle(pid , maxstep);
+
   // TODO: Initialize the pid variable.
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&pid, &enable_twiddle, &twiddle, &throttle_1](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -50,6 +72,8 @@ int main()
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
+
+          
           double steer_value;
           /*
           * TODO: Calcuate steering value here, remember the steering value is
@@ -57,15 +81,33 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
+          pid.UpdateError(cte);
+          steer_value=-pid.TotalError();
+          if (steer_value > 1) {
+            steer_value = 1;
+          }
+          else if (steer_value < -1) {
+            steer_value = -1;
+          }
+// Twiddle Didn't Work. Tried Hard :(. Need some help when you review the project
+         // if(enable_twiddle){
+            //cout<<"Enter Twiddle"<<endl;
+            //twiddle.twiddle(cte);
+            //if(twiddle.step==0){
+              //std::cout << "Reset Simulator" << std::endl;
+	            //std::string msg("42[\"reset\",{}]");
+	            //ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            //}
+          //}
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          throttle_1=0.7 - 2.9*steer_value;
+          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << "Throttle"<< throttle_1<<std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = 0.75 - 0.1*(abs(steer_value)) -0.3*(abs(cte));
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          //std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
