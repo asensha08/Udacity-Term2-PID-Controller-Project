@@ -2,6 +2,21 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+##Rubric Questions
+---
+## Describe the effect each of the P, I, D components had in your implementation.
+* The P, or "proportional", had the biggest contrbution on the car's behavior. If the proportional coefficient is too high then they were oscillations seen on the simulator. The overshoot is high when P component is high. To reduce overshoots I used the Intergral and Differenatial components and reduced the Proporional component
+
+The D, or "differential", component nullifys the P component's tendency to overshoot the reference.. When the D term was high the vehile turn abrubtly and kept moving in circles
+
+The I, or "integral", reduces the CTE around the curves.  so the Integrak term reduces the steady state error in the CTE but too high of a Intergral term reduced stability when driving straight and it took longer for the car to eliminate oscillations
+
+## Describe how the final hyperparameters were chosen.
+The hyperparameters were tuned manually. The Twiddle algorithm was coded but it didn't work and showed errors in the final parameters.
+
+For manual tuning I started with P as 1 to check where it starts to oscillate. Then I introduced some D values to check its effect. It rendered the car to turn to excessively in circle. So the D was reduced to very small value. I used the same an integral value greater than 1 and started the simulation. The car couldn't stay on track after the bridge and on the right turn area. So I kept increasing untill it started to oscillate. Here I tried to reduce both P and I components and the results were perfect
+
+To fire up the inner Vin Diesel, I designed a customized controller for the throttle using the absolute value of steering and the CTE. My Top speed is 77mph. I had to tune the propotional coefficients of steering anf CTE to make the vehicle reduce speeds during turns and increase or remain constant when driving straight. The speed could have been increased but then the tuning became tough. 
 
 ## Dependencies
 
